@@ -1,16 +1,20 @@
 class Game {
     grid = []
     activeFigure
+    nextFigure
     onChangeAction
+
+    score = 0
+    level = 1
 
     constructor() {
         this._initGrid()
-        this.addFigure(new Figure())
+        this._addFigure(new Figure())
     }
 
     start() {
         setInterval(() => {
-            this.moveDown()
+            this.moveDown(true)
         }, 400)
     }
 
@@ -18,22 +22,17 @@ class Game {
         this.onChangeAction = fn
     }
 
-    addFigure(figure) {
-        this.activeFigure = figure
-        this._setFigureInGrid()
-        if (this._isCollision()) {
-            this._initGrid()
-        }
-    }
-
-    moveDown() {
+    moveDown(auto = false) {
         if (!this._isCollision()) {
             this._registerChangeInFigure(() => {
                 this.activeFigure.position.y++
+                if (!auto) {
+                    this.score += 1
+                }
             })
         } else {
-            this._handleStrike()
-            this.addFigure(new Figure())
+            this._handleLineClear()
+            this._addFigure(this.nextFigure)
         }
     }
 
@@ -69,7 +68,20 @@ class Game {
     moveAllWayDown() {
         const activeFigure = this.activeFigure
         while (activeFigure == this.activeFigure) {
-            this.moveDown()
+            this.moveDown(true)
+            this.score += 2
+        }
+    }
+
+    _addFigure(figure) {
+        this.activeFigure = figure
+        this.nextFigure = new Figure()
+        this._setActiveFigureInGrid()
+        this._registerChangeInFigure()
+
+        if (this._isCollision()) {
+            // Game over
+            this._initGrid()
         }
     }
 
@@ -83,20 +95,36 @@ class Game {
     }
 
     _registerChangeInFigure(fn) {
-        this._removeFigureFromGrid()
-        fn()
-        this._setFigureInGrid()
-        this.onChangeAction()
+        this._removeActiveFigureFromGrid()
+        if (fn) {
+            fn()
+        }
+        this._setActiveFigureInGrid()
+
+        if (this.onChangeAction) {
+            this.onChangeAction()
+        }
     }
 
-    _handleStrike() {
+    _handleLineClear() {
+        let streak = 0
         this.grid.forEach((x, i) => {
             if (x.every(y => !!y)) {
+                streak++
                 for (let k = i; k > 0; k--) {
                     this.grid[k].forEach((_, j) => (this.grid[k][j] = this.grid[k - 1][j]))
                 }
             }
         })
+
+        this.level += streak
+        this.score +=
+            {
+                1: 100 * this.level,
+                2: 300 * this.level,
+                3: 500 * this.level,
+                4: 800 * this.level
+            }[streak] || 0
     }
 
     _isValidMoveRight() {
@@ -122,7 +150,7 @@ class Game {
     }
 
     _isCollision() {
-        this._removeFigureFromGrid()
+        this._removeActiveFigureFromGrid()
         const isCollision = this.activeFigure.shape.some((x, i) =>
             x.some(
                 (y, j) =>
@@ -131,11 +159,11 @@ class Game {
                         !!this.grid[i + this.activeFigure.position.y + 1][j + this.activeFigure.position.x])
             )
         )
-        this._setFigureInGrid()
+        this._setActiveFigureInGrid()
         return isCollision
     }
 
-    _removeFigureFromGrid() {
+    _removeActiveFigureFromGrid() {
         this.activeFigure.shape.forEach((x, i) => {
             x.forEach((y, j) => {
                 if (y) {
@@ -145,11 +173,12 @@ class Game {
         })
     }
 
-    _setFigureInGrid() {
+    _setActiveFigureInGrid() {
         this.activeFigure.shape.forEach((x, i) => {
             x.forEach((y, j) => {
                 if (y) {
-                    this.grid[i + this.activeFigure.position.y][j + this.activeFigure.position.x] = this.activeFigure.color
+                    this.grid[i + this.activeFigure.position.y][j + this.activeFigure.position.x] =
+                        this.activeFigure.color
                 }
             })
         })

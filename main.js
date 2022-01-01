@@ -3,7 +3,7 @@ window.onload = () => {
     const ui = new UI(game)
 
     game.onChange(() => {
-        ui.drawGrid()
+        ui.draw()
     })
 
     game.start()
