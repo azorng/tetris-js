@@ -7,6 +7,10 @@ class Game {
     score = 0
     level = 1
 
+    notify() {
+
+    }
+
     constructor() {
         this._initGrid()
         this._addFigure(new Figure())
@@ -23,7 +27,7 @@ class Game {
     }
 
     moveDown(cnf = { auto: false }) {
-        if (!this._isCollision()) {
+        if (!this._isCollisionDown()) {
             this._registerChangeInFigure(() => {
                 this.activeFigure.position.y++
                 if (!cnf.auto) {
@@ -37,19 +41,19 @@ class Game {
     }
 
     moveLeft() {
-        this._registerChangeInFigure(() => {
-            if (this._isValidMoveLeft()) {
+        if (!this._isCollisionLeft()) {
+            this._registerChangeInFigure(() => {
                 this.activeFigure.position.x--
-            }
-        })
+            })
+        }
     }
 
     moveRight() {
-        this._registerChangeInFigure(() => {
-            if (this._isValidMoveRight()) {
+        if (!this._isCollisionRight()) {
+            this._registerChangeInFigure(() => {
                 this.activeFigure.position.x++
-            }
-        })
+            })
+        }
     }
 
     rotate() {
@@ -79,7 +83,7 @@ class Game {
         this._setActiveFigureInGrid()
         this._registerChangeInFigure()
 
-        if (this._isCollision()) {
+        if (this._isCollisionDown()) {
             // Game over
             this.score = 0
             this.level = 1
@@ -129,58 +133,50 @@ class Game {
         this.level += streak
     }
 
-    _isValidMoveRight() {
-        return !this.activeFigure.shape.some((x, i) =>
-            x.some(
-                (y, j) =>
-                    y &&
-                    (j + this.activeFigure.position.x + 1 == Settings.N_COLS ||
-                        !!this.grid[i + this.activeFigure.position.y][j + this.activeFigure.position.x + 1])
-            )
+    _isCollisionRight() {
+        return this._someCell(
+            (relY, relX) =>
+                relX + this.activeFigure.position.x + 1 == Settings.N_COLS ||
+                !!this.grid[relY + this.activeFigure.position.y][relX + this.activeFigure.position.x + 1]
         )
     }
 
-    _isValidMoveLeft() {
-        return !this.activeFigure.shape.some((x, i) =>
-            x.some(
-                (y, j) =>
-                    y &&
-                    (j + this.activeFigure.position.x == 0 ||
-                        !!this.grid[i + this.activeFigure.position.y][j + this.activeFigure.position.x - 1])
-            )
+    _isCollisionLeft() {
+        return this._someCell(
+            (relY, relX) =>
+                relX + this.activeFigure.position.x == 0 ||
+                !!this.grid[relY + this.activeFigure.position.y][relX + this.activeFigure.position.x - 1]
         )
     }
 
-    _isCollision() {
+    _isCollisionDown() {
+        return this._someCell(
+            (relY, relX) =>
+                relY + this.activeFigure.position.y + 1 == Settings.N_ROWS ||
+                !!this.grid[relY + this.activeFigure.position.y + 1][relX + this.activeFigure.position.x]
+        )
+    }
+
+    _someCell(f) {
         this._removeActiveFigureFromGrid()
-        const isCollision = this.activeFigure.shape.some((x, i) =>
-            x.some(
-                (y, j) =>
-                    y &&
-                    (i + this.activeFigure.position.y + 1 == Settings.N_ROWS ||
-                        !!this.grid[i + this.activeFigure.position.y + 1][j + this.activeFigure.position.x])
-            )
-        )
+        const r = this.activeFigure.shape.some((x, i) => x.some((y, j) => y && f(i, j)))
         this._setActiveFigureInGrid()
-        return isCollision
+        return r
     }
 
     _removeActiveFigureFromGrid() {
-        this.activeFigure.shape.forEach((x, i) => {
-            x.forEach((y, j) => {
-                if (y) {
-                    this.grid[i + this.activeFigure.position.y][j + this.activeFigure.position.x] = 0
-                }
-            })
-        })
+        this._fillActiveFigureWith(0)
     }
 
     _setActiveFigureInGrid() {
+        this._fillActiveFigureWith(this.activeFigure.color)
+    }
+
+    _fillActiveFigureWith(fillWith) {
         this.activeFigure.shape.forEach((x, i) => {
             x.forEach((y, j) => {
-                if (y) {
-                    this.grid[i + this.activeFigure.position.y][j + this.activeFigure.position.x] =
-                        this.activeFigure.color
+                if (y && [j + this.activeFigure.position.x] < Settings.N_COLS) {
+                    this.grid[i + this.activeFigure.position.y][j + this.activeFigure.position.x] = fillWith
                 }
             })
         })
