@@ -13,7 +13,7 @@ class Figure {
         const f = this.figures[Util.rng(0, this.figures.length - 1)]
         this.shape = f.shape
         this.color = f.color
-        this.position = new Position(Settings.N_COLS / 2 - 1, 0)
+        this.position = new Position(Math.round(Settings.N_COLS / 2), 0)
     }
 
     figures = [

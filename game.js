@@ -81,6 +81,8 @@ class Game {
 
         if (this._isCollision()) {
             // Game over
+            this.score = 0
+            this.level = 1
             this._initGrid()
         }
     }
