@@ -14,7 +14,7 @@ class Game {
 
     start() {
         setInterval(() => {
-            this.moveDown(true)
+            this.moveDown({ auto: true })
         }, 400)
     }
 
@@ -22,11 +22,11 @@ class Game {
         this.onChangeAction = fn
     }
 
-    moveDown(auto = false) {
+    moveDown(cnf = { auto: false }) {
         if (!this._isCollision()) {
             this._registerChangeInFigure(() => {
                 this.activeFigure.position.y++
-                if (!auto) {
+                if (!cnf.auto) {
                     this.score += 1
                 }
             })
@@ -68,7 +68,7 @@ class Game {
     moveAllWayDown() {
         const activeFigure = this.activeFigure
         while (activeFigure == this.activeFigure) {
-            this.moveDown(true)
+            this.moveDown({ auto: true })
             this.score += 2
         }
     }
@@ -117,7 +117,6 @@ class Game {
             }
         })
 
-        this.level += streak
         this.score +=
             {
                 1: 100 * this.level,
@@ -125,6 +124,7 @@ class Game {
                 3: 500 * this.level,
                 4: 800 * this.level
             }[streak] || 0
+        this.level += streak
     }
 
     _isValidMoveRight() {
