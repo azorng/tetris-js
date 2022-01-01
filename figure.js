@@ -9,11 +9,47 @@ class Figure {
     position
     shape
 
-    constructor() {
+    constructor(game) {
         const f = this.figures[Util.rng(0, this.figures.length - 1)]
+        this.game = game
         this.shape = f.shape
         this.color = f.color
-        this.position = new Position(Math.round(Settings.N_COLS / 2), 0)
+        this.position = new Position(Math.round(Settings.N_COLS / 2 - 1), 0)
+    }
+
+    notifyChange(fn) {
+        this.game.handleChangeInFigure(fn)
+    }
+
+    rotate() {
+        this.notifyChange(() => {
+            const newShape = JSON.parse(JSON.stringify(this.shape))
+            this.shape.forEach((x, i) => {
+                x.forEach((_, j) => {
+                    newShape[i][j] = this.shape[j][i]
+                })
+            })
+            newShape.reverse()
+            this.shape = newShape
+        })
+    }
+
+    moveRight() {
+        this.notifyChange(() => {
+            this.position.x++
+        })
+    }
+
+    moveLeft() {
+        this.notifyChange(() => {
+            this.position.x--
+        })
+    }
+
+    moveDown() {
+        this.notifyChange(() => {
+            this.position.y++
+        })
     }
 
     figures = [

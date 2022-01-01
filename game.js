@@ -7,13 +7,9 @@ class Game {
     score = 0
     level = 1
 
-    notify() {
-
-    }
-
     constructor() {
         this._initGrid()
-        this._addFigure(new Figure())
+        this._newFigure()
     }
 
     start() {
@@ -28,45 +24,30 @@ class Game {
 
     moveDown(cnf = { auto: false }) {
         if (!this._isCollisionDown()) {
-            this._registerChangeInFigure(() => {
-                this.activeFigure.position.y++
-                if (!cnf.auto) {
-                    this.score += 1
-                }
-            })
+            this.activeFigure.moveDown()
+            if (!cnf.auto) {
+                this.score += 1
+            }
         } else {
             this._handleLineClear()
-            this._addFigure(this.nextFigure)
+            this._newFigure(this.nextFigure)
         }
     }
 
     moveLeft() {
         if (!this._isCollisionLeft()) {
-            this._registerChangeInFigure(() => {
-                this.activeFigure.position.x--
-            })
+            this.activeFigure.moveLeft()
         }
     }
 
     moveRight() {
         if (!this._isCollisionRight()) {
-            this._registerChangeInFigure(() => {
-                this.activeFigure.position.x++
-            })
+            this.activeFigure.moveRight()
         }
     }
 
     rotate() {
-        this._registerChangeInFigure(() => {
-            const newShape = JSON.parse(JSON.stringify(this.activeFigure.shape))
-            this.activeFigure.shape.forEach((x, i) => {
-                x.forEach((_, j) => {
-                    newShape[i][j] = this.activeFigure.shape[j][i]
-                })
-            })
-            newShape.reverse()
-            this.activeFigure.shape = newShape
-        })
+        this.activeFigure.rotate()
     }
 
     moveAllWayDown() {
@@ -77,11 +58,11 @@ class Game {
         }
     }
 
-    _addFigure(figure) {
-        this.activeFigure = figure
-        this.nextFigure = new Figure()
-        this._setActiveFigureInGrid()
-        this._registerChangeInFigure()
+    _newFigure(figure) {
+        this.activeFigure = figure || new Figure(this)
+        this.nextFigure = new Figure(this)
+
+        this.handleChangeInFigure()
 
         if (this._isCollisionDown()) {
             // Game over
@@ -100,10 +81,10 @@ class Game {
         }
     }
 
-    _registerChangeInFigure(fn) {
+    handleChangeInFigure(changeAction) {
         this._removeActiveFigureFromGrid()
-        if (fn) {
-            fn()
+        if (changeAction) {
+            changeAction()
         }
         this._setActiveFigureInGrid()
 
